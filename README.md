@@ -4,7 +4,7 @@ A interactive CLI Todo App in Rust
 
 ## Quick Start
 ```console
-$ cargo run
+$ cargo run <file_path>
 ```
 
 ## Controls

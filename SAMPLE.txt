@@ -1,0 +1,5 @@
+TODO: Write a Todo app
+TODO: Eat junk food
+TODO: Pet the dog
+DONE: Being pissed at react-native
+DONE: Eat lunch

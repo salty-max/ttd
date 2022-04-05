@@ -3,7 +3,6 @@ pub mod ui;
 pub const REGULAR_PAIR: i16 = 0;
 pub const HIGHLIGHT_PAIR: i16 = 1;
 pub type ID = usize;
-
 pub enum Status {
     Todo,
     Done,

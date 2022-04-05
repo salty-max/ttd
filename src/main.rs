@@ -1,8 +1,16 @@
-// TODO: persist app state
 // TODO: add new items
 // TODO: edit items
+// TODO: delete items
 // TODO: keep track of an item's done date
 // TODO: undo system
+// TODO: handle SIGINT
+
+use std::{
+    env,
+    fs::File,
+    io::{self, BufRead, BufReader, Write},
+    process::{self},
+};
 
 use ncurses::*;
 use ttd::{ui::UI, Status, HIGHLIGHT_PAIR, ID, REGULAR_PAIR};
@@ -31,7 +39,70 @@ fn list_transfer(
     }
 }
 
-fn main() {
+fn parse_item(line: &str) -> Option<(Status, &str)> {
+    let todo_prefix = "TODO: ";
+    let done_prefix = "DONE: ";
+
+    if let Some(label) = line.strip_prefix(todo_prefix) {
+        return Some((Status::Todo, label));
+    }
+
+    if let Some(label) = line.strip_prefix(done_prefix) {
+        return Some((Status::Done, label));
+    }
+
+    None
+}
+
+fn load_state(todos: &mut Vec<String>, dones: &mut Vec<String>, file_path: &str) -> io::Result<()> {
+    let file = File::open(file_path).unwrap_or_else(|_| File::create(file_path).unwrap());
+    for (index, line) in BufReader::new(file).lines().enumerate() {
+        match parse_item(&line.unwrap()) {
+            Some((Status::Todo, label)) => todos.push(String::from(label)),
+            Some((Status::Done, label)) => dones.push(String::from(label)),
+            None => {
+                eprintln!("{}:{}: ERROR: ill-formed item line", file_path, index + 1);
+                process::exit(1);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn save_state(todos: &[String], dones: &[String], file_path: &str) -> io::Result<()> {
+    let mut file = File::create(file_path)?;
+
+    for todo in todos.iter() {
+        writeln!(file, "TODO: {}", todo)?;
+    }
+    for done in dones.iter() {
+        writeln!(file, "DONE: {}", done)?;
+    }
+
+    Ok(())
+}
+
+fn main() -> std::io::Result<()> {
+    let mut args = env::args();
+    args.next().unwrap();
+
+    let file_path = match args.next() {
+        Some(file_path) => file_path,
+        None => {
+            eprintln!("Usage: ttd <file-path>");
+            eprintln!("ERROR: file path is not provided");
+            process::exit(1)
+        }
+    };
+
+    let mut todos = Vec::<String>::new();
+    let mut dones = Vec::<String>::new();
+    let mut selected_todo: ID = 0;
+    let mut selected_done: ID = 0;
+
+    load_state(&mut todos, &mut dones, &file_path)?;
+
     initscr();
     noecho();
     curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
@@ -42,18 +113,6 @@ fn main() {
     init_pair(HIGHLIGHT_PAIR, COLOR_BLACK, COLOR_WHITE);
 
     let mut quit = false;
-
-    let mut todos = vec![
-        String::from("Pet the dog"),
-        String::from("Write a Todo app"),
-        String::from("Eat junk food"),
-    ];
-    let mut dones = vec![
-        String::from("Being pissed at react-native"),
-        String::from("Eat lunch"),
-    ];
-    let mut selected_todo: usize = 0;
-    let mut selected_done: usize = 0;
 
     let mut focus = Status::Todo;
 
@@ -108,9 +167,22 @@ fn main() {
             '\t' => {
                 focus = focus.toggle();
             }
+            // 'S' => {
+            //     let mut file = File::create("TODO.txt")?;
+            //     for todo in todos.iter() {
+            //         writeln!(file, "TODO: {}", todo)?;
+            //     }
+            //     for done in dones.iter() {
+            //         writeln!(file, "DONE: {}", done)?;
+            //     }
+            // }
             _ => {}
         }
     }
 
+    save_state(&todos, &dones, &file_path)?;
+
     endwin();
+
+    Ok(())
 }
