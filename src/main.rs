@@ -1,13 +1,12 @@
 use ncurses::*;
-use std::cmp::min;
-use ttd::{ui::UI, Focus, HIGHLIGHT_PAIR, ID, REGULAR_PAIR};
+use ttd::{ui::UI, Status, HIGHLIGHT_PAIR, ID, REGULAR_PAIR};
 
-fn move_up(selected: &mut usize) {
+fn move_up(selected: &mut ID) {
     if *selected > 0 {
         *selected -= 1
     }
 }
-fn move_down(selected: &mut usize, list: &[String]) {
+fn move_down(selected: &mut ID, list: &[String]) {
     if *selected + 1 < list.len() {
         *selected += 1;
     }
@@ -24,13 +23,7 @@ fn main() {
     init_pair(HIGHLIGHT_PAIR, COLOR_BLACK, COLOR_WHITE);
 
     let mut quit = false;
-    // let mut items = vec![
-    //     Todo::new(String::from("Pet the cat")),
-    //     Todo::new(String::from("Write a Todo app")),
-    //     Todo::new(String::from("Eat dinner")),
-    // ];
 
-    // items[0].set_state();
     let mut todos = vec![
         String::from("Pet the dog"),
         String::from("Write a Todo app"),
@@ -43,7 +36,7 @@ fn main() {
     let mut selected_todo: usize = 0;
     let mut selected_done: usize = 0;
 
-    let mut focus = Focus::Todo;
+    let mut focus = Status::Todo;
 
     let mut ui = UI::default();
 
@@ -52,7 +45,7 @@ fn main() {
         ui.begin(0, 0);
 
         match focus {
-            Focus::Todo => {
+            Status::Todo => {
                 ui.label("TODO:", REGULAR_PAIR);
                 ui.begin_list(selected_todo);
                 for (index, todo) in todos.iter().enumerate() {
@@ -60,7 +53,7 @@ fn main() {
                 }
                 ui.end_list();
             }
-            Focus::Done => {
+            Status::Done => {
                 ui.label("DONE:", REGULAR_PAIR);
                 ui.begin_list(selected_done);
                 for (index, done) in dones.iter().enumerate() {
@@ -80,20 +73,20 @@ fn main() {
         match key as u8 as char {
             'q' => quit = true,
             'w' | 'z' => match focus {
-                Focus::Todo => move_up(&mut selected_todo),
-                Focus::Done => move_up(&mut selected_done),
+                Status::Todo => move_up(&mut selected_todo),
+                Status::Done => move_up(&mut selected_done),
             },
             's' => match focus {
-                Focus::Todo => move_down(&mut selected_todo, &todos),
-                Focus::Done => move_down(&mut selected_done, &dones),
+                Status::Todo => move_down(&mut selected_todo, &todos),
+                Status::Done => move_down(&mut selected_done, &dones),
             },
             '\n' => match focus {
-                Focus::Todo => {
+                Status::Todo => {
                     if selected_todo < todos.len() {
                         dones.push(todos.remove(selected_todo))
                     }
                 }
-                Focus::Done => {
+                Status::Done => {
                     if selected_done < dones.len() {
                         todos.push(dones.remove(selected_done))
                     }
