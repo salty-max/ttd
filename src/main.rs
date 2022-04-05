@@ -1,3 +1,9 @@
+// TODO: persist app state
+// TODO: add new items
+// TODO: edit items
+// TODO: keep track of an item's done date
+// TODO: undo system
+
 use ncurses::*;
 use ttd::{ui::UI, Status, HIGHLIGHT_PAIR, ID, REGULAR_PAIR};
 
@@ -9,6 +15,19 @@ fn move_up(selected: &mut ID) {
 fn move_down(selected: &mut ID, list: &[String]) {
     if *selected + 1 < list.len() {
         *selected += 1;
+    }
+}
+
+fn list_transfer(
+    src_list: &mut Vec<String>,
+    dest_list: &mut Vec<String>,
+    src_selected_item: &mut ID,
+) {
+    if *src_selected_item < src_list.len() {
+        dest_list.push(src_list.remove(*src_selected_item));
+        if *src_selected_item >= src_list.len() && !src_list.is_empty() {
+            *src_selected_item = src_list.len() - 1;
+        }
     }
 }
 
@@ -83,16 +102,8 @@ fn main() {
                 Status::Done => move_down(&mut selected_done, &dones),
             },
             '\n' => match focus {
-                Status::Todo => {
-                    if selected_todo < todos.len() {
-                        dones.push(todos.remove(selected_todo))
-                    }
-                }
-                Status::Done => {
-                    if selected_done < dones.len() {
-                        todos.push(dones.remove(selected_done))
-                    }
-                }
+                Status::Todo => list_transfer(&mut todos, &mut dones, &mut selected_todo),
+                Status::Done => list_transfer(&mut dones, &mut todos, &mut selected_done),
             },
             '\t' => {
                 focus = focus.toggle();
