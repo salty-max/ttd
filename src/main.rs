@@ -46,7 +46,8 @@ fn main() {
 
         match focus {
             Status::Todo => {
-                ui.label("[TODO] DONE", REGULAR_PAIR);
+                ui.label("[TODO] DONE ", REGULAR_PAIR);
+                ui.label("------------", REGULAR_PAIR);
                 ui.begin_list(selected_todo);
                 for (index, todo) in todos.iter().enumerate() {
                     ui.list_element(&format!("- [ ] {}", todo), index);
@@ -55,6 +56,7 @@ fn main() {
             }
             Status::Done => {
                 ui.label(" TODO [DONE]", REGULAR_PAIR);
+                ui.label("------------", REGULAR_PAIR);
                 ui.begin_list(selected_done);
                 for (index, done) in dones.iter().enumerate() {
                     ui.list_element(&format!("- [X] {}", done), index);
