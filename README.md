@@ -7,6 +7,11 @@ A interactive CLI Todo App in Rust
 $ cargo run <file_path>
 ```
 
+## Example
+```console
+$ cargo run SAMPLE.txt
+```
+
 ## Controls
 
 |Keys|Description|
