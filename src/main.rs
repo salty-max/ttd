@@ -36,6 +36,7 @@ fn main() {
     let mut ui = UI::default();
 
     while !quit {
+        erase();
         ui.begin(0, 0);
 
         ui.label("TODO:", REGULAR_PAIR);
