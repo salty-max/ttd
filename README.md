@@ -11,6 +11,7 @@ $ cargo run
 
 |Keys|Description|
 |---|---|
-|<kbd>UP</kbd>, <kbd>DOWN</kbd>|Move up and down|
-|<kbd>RETURN</kbd>|Toggle selected element's state|
+|<kbd>w</kbd>, <kbd>z</kbd>|Move up|
+|<kbd>s</kbd>|Move down|
+|<kbd>Return</kbd>|Toggle selected element's state|
 |<kbd>q</kbd>|Quit|

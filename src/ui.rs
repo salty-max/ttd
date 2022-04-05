@@ -1,5 +1,6 @@
-use crate::prelude::*;
 use ncurses::*;
+
+use crate::{HIGHLIGHT_PAIR, ID, REGULAR_PAIR};
 
 #[derive(Default)]
 pub struct UI {

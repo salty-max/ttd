@@ -1,7 +1,17 @@
-use std::cmp::min;
-
 use ncurses::*;
-use ttd::prelude::*;
+use std::cmp::min;
+use ttd::{ui::UI, Focus, HIGHLIGHT_PAIR, ID, REGULAR_PAIR};
+
+fn move_up(selected: &mut usize) {
+    if *selected > 0 {
+        *selected -= 1
+    }
+}
+fn move_down(selected: &mut usize, list: &[String]) {
+    if *selected + 1 < list.len() {
+        *selected += 1;
+    }
+}
 
 fn main() {
     initscr();
@@ -33,49 +43,56 @@ fn main() {
     let mut selected_todo: usize = 0;
     let mut selected_done: usize = 0;
 
+    let mut focus = Focus::Todo;
+
     let mut ui = UI::default();
 
     while !quit {
         erase();
         ui.begin(0, 0);
 
-        ui.label("TODO:", REGULAR_PAIR);
-        ui.begin_list(selected_todo);
-        for (index, todo) in todos.iter().enumerate() {
-            ui.list_element(&format!("- [ ] {}", todo), index);
+        match focus {
+            Focus::Todo => {
+                ui.label("TODO:", REGULAR_PAIR);
+                ui.begin_list(selected_todo);
+                for (index, todo) in todos.iter().enumerate() {
+                    ui.list_element(&format!("- [ ] {}", todo), index);
+                }
+                ui.end_list();
+            }
+            Focus::Done => {
+                ui.label("DONE:", REGULAR_PAIR);
+                ui.begin_list(selected_done);
+                for (index, done) in dones.iter().enumerate() {
+                    ui.list_element(&format!("- [X] {}", done), index);
+                }
+                ui.end_list();
+            }
         }
-        ui.end_list();
 
         ui.label("------------------------------", REGULAR_PAIR);
-
-        ui.label("DONE:", REGULAR_PAIR);
-        ui.begin_list(0);
-        for (index, done) in dones.iter().enumerate() {
-            ui.list_element(&format!("- [X] {}", done), index + 1);
-        }
-        ui.end_list();
 
         ui.end();
 
         refresh();
 
         let key = getch();
-        match key {
-            113 => quit = true,
-            KEY_UP => {
-                if selected_todo > 0 {
-                    selected_todo -= 1
-                }
-            }
-            KEY_DOWN => {
-                if selected_todo + 1 < todos.len() {
-                    selected_todo = min(selected_todo + 1, todos.len() - 1)
-                }
-            }
-            10 => {
-                if selected_todo < todos.len() {
-                    dones.push(todos.remove(selected_todo));
-                }
+        match key as u8 as char {
+            'q' => quit = true,
+            'w' | 'z' => match focus {
+                Focus::Todo => move_up(&mut selected_todo),
+                Focus::Done => move_up(&mut selected_done),
+            },
+            's' => match focus {
+                Focus::Todo => move_down(&mut selected_todo, &todos),
+                Focus::Done => move_down(&mut selected_done, &dones),
+            },
+            '\n' => match focus {
+                Focus::Todo => dones.push(todos.remove(selected_todo)),
+                Focus::Done => todos.push(dones.remove(selected_done)),
+            },
+            '\t' => {
+                focus = focus.toggle();
             }
             _ => {}
         }
