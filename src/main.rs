@@ -88,8 +88,16 @@ fn main() {
                 Focus::Done => move_down(&mut selected_done, &dones),
             },
             '\n' => match focus {
-                Focus::Todo => dones.push(todos.remove(selected_todo)),
-                Focus::Done => todos.push(dones.remove(selected_done)),
+                Focus::Todo => {
+                    if selected_todo < todos.len() {
+                        dones.push(todos.remove(selected_todo))
+                    }
+                }
+                Focus::Done => {
+                    if selected_done < dones.len() {
+                        todos.push(dones.remove(selected_done))
+                    }
+                }
             },
             '\t' => {
                 focus = focus.toggle();
