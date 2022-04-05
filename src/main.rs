@@ -9,6 +9,7 @@ use std::{
     env,
     fs::File,
     io::{self, BufRead, BufReader, Write},
+    path::Path,
     process::{self},
 };
 
@@ -55,8 +56,21 @@ fn parse_item(line: &str) -> Option<(Status, &str)> {
 }
 
 fn load_state(todos: &mut Vec<String>, dones: &mut Vec<String>, file_path: &str) -> io::Result<()> {
-    let file = File::open(file_path).unwrap_or_else(|_| File::create(file_path).unwrap());
-    for (index, line) in BufReader::new(file).lines().enumerate() {
+    let file = {
+        if Path::new(file_path).exists() {
+            File::open(file_path)?
+        } else {
+            File::options()
+                .read(true)
+                .write(true)
+                .create_new(true)
+                .open(file_path)?
+        }
+    };
+
+    let buffer = BufReader::new(file);
+
+    for (index, line) in buffer.lines().enumerate() {
         match parse_item(&line.unwrap()) {
             Some((Status::Todo, label)) => todos.push(String::from(label)),
             Some((Status::Done, label)) => dones.push(String::from(label)),
