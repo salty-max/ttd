@@ -12,23 +12,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -qq libncurses-dev libpcre2-dev libncursesw5-dev
 
-      - name: build
       - uses: actions-rs/cargo@v1
         with: 
           command: build
           args: --release --all-features
 
-      - name: test
       - uses: actions-rs/cargo@v1
         with:
           command: test
 
-      - name: lint
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
 
-      - name: format
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
