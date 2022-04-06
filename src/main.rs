@@ -14,7 +14,10 @@ use std::{
 };
 
 use ncurses::*;
-use ttd::{ui::UI, Status, HIGHLIGHT_PAIR, ID, REGULAR_PAIR};
+use ttd::{
+    graphics::{ui::UI, vec2::Vec2},
+    Status, HIGHLIGHT_PAIR, ID, REGULAR_PAIR,
+};
 
 fn move_up(selected: &mut ID) {
     if *selected > 0 {
@@ -134,30 +137,34 @@ fn main() -> std::io::Result<()> {
 
     while !quit {
         erase();
-        ui.begin(0, 0);
+        ui.begin(Vec2::zero());
 
         match focus {
             Status::Todo => {
                 ui.label("[TODO] DONE ", REGULAR_PAIR);
                 ui.label("------------", REGULAR_PAIR);
-                ui.begin_list(selected_todo);
                 for (index, todo) in todos.iter().enumerate() {
-                    ui.list_element(&format!("- [ ] {}", todo), index);
+                    let pair = if index == selected_todo {
+                        HIGHLIGHT_PAIR
+                    } else {
+                        REGULAR_PAIR
+                    };
+                    ui.label(&format!("- [ ] {}", todo), pair);
                 }
-                ui.end_list();
             }
             Status::Done => {
                 ui.label(" TODO [DONE]", REGULAR_PAIR);
                 ui.label("------------", REGULAR_PAIR);
-                ui.begin_list(selected_done);
                 for (index, done) in dones.iter().enumerate() {
-                    ui.list_element(&format!("- [X] {}", done), index);
+                    let pair = if index == selected_todo {
+                        HIGHLIGHT_PAIR
+                    } else {
+                        REGULAR_PAIR
+                    };
+                    ui.label(&format!("- [ ] {}", done), pair);
                 }
-                ui.end_list();
             }
         }
-
-        ui.label("------------------------------", REGULAR_PAIR);
 
         ui.end();
 
