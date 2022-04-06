@@ -15,7 +15,7 @@ use std::{
 
 use ncurses::*;
 use ttd::{
-    graphics::{ui::UI, vec2::Vec2},
+    graphics::{layout::LayoutDir, ui::UI, vec2::Vec2},
     Status, HIGHLIGHT_PAIR, ID, REGULAR_PAIR,
 };
 
@@ -137,34 +137,33 @@ fn main() -> std::io::Result<()> {
 
     while !quit {
         erase();
-        ui.begin(Vec2::zero());
+        ui.begin(Vec2::zero(), LayoutDir::Horizontal);
 
-        match focus {
-            Status::Todo => {
-                ui.label("[TODO] DONE ", REGULAR_PAIR);
-                ui.label("------------", REGULAR_PAIR);
-                for (index, todo) in todos.iter().enumerate() {
-                    let pair = if index == selected_todo {
-                        HIGHLIGHT_PAIR
-                    } else {
-                        REGULAR_PAIR
-                    };
-                    ui.label(&format!("- [ ] {}", todo), pair);
-                }
-            }
-            Status::Done => {
-                ui.label(" TODO [DONE]", REGULAR_PAIR);
-                ui.label("------------", REGULAR_PAIR);
-                for (index, done) in dones.iter().enumerate() {
-                    let pair = if index == selected_todo {
-                        HIGHLIGHT_PAIR
-                    } else {
-                        REGULAR_PAIR
-                    };
-                    ui.label(&format!("- [ ] {}", done), pair);
-                }
-            }
+        ui.begin_layout(LayoutDir::Vertical);
+        ui.label("TODO:", REGULAR_PAIR);
+        ui.label("------------", REGULAR_PAIR);
+        for (index, todo) in todos.iter().enumerate() {
+            let pair = if index == selected_todo && focus == Status::Todo {
+                HIGHLIGHT_PAIR
+            } else {
+                REGULAR_PAIR
+            };
+            ui.label(&format!("- [ ] {}", todo), pair);
         }
+        ui.end_layout();
+
+        ui.begin_layout(LayoutDir::Vertical);
+        ui.label("DONE:", REGULAR_PAIR);
+        ui.label("------------", REGULAR_PAIR);
+        for (index, done) in dones.iter().enumerate() {
+            let pair = if index == selected_done && focus == Status::Done {
+                HIGHLIGHT_PAIR
+            } else {
+                REGULAR_PAIR
+            };
+            ui.label(&format!("- [X] {}", done), pair);
+        }
+        ui.end_layout();
 
         ui.end();
 

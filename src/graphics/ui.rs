@@ -10,11 +10,10 @@ pub struct UI {
 }
 
 impl UI {
-    pub fn begin(&mut self, pos: Vec2) {
+    pub fn begin(&mut self, pos: Vec2, dir: LayoutDir) {
         assert!(self.layouts.is_empty());
 
-        self.layouts
-            .push(Layout::new(LayoutDir::Vertical, pos, None));
+        self.layouts.push(Layout::new(dir, pos, None));
     }
 
     pub fn end(&mut self) {
@@ -32,7 +31,11 @@ impl UI {
     }
 
     pub fn end_layout(&mut self) {
-        self.layouts.pop().expect("Layout stack underflow");
+        let layout = self.layouts.pop().expect("Layout stack underflow");
+        self.layouts
+            .last_mut()
+            .expect("Layout stack underflow")
+            .add_widget(layout.size);
     }
 
     pub fn label(&mut self, s: &str, pair: i16) {
