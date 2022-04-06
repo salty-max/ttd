@@ -136,8 +136,16 @@ fn main() -> std::io::Result<()> {
         ui.begin(Vec2::zero(), LayoutDir::Horizontal);
 
         ui.begin_layout(LayoutDir::Vertical);
-        ui.label("TODO:", REGULAR_PAIR);
+
+        let todo_header_color = if focus == Status::Todo {
+            HIGHLIGHT_PAIR
+        } else {
+            REGULAR_PAIR
+        };
+
+        ui.label(" TODO ", todo_header_color);
         ui.label("------------", REGULAR_PAIR);
+
         for (index, todo) in todos.iter().enumerate() {
             let pair = if index == selected_todo && focus == Status::Todo {
                 HIGHLIGHT_PAIR
@@ -146,19 +154,29 @@ fn main() -> std::io::Result<()> {
             };
             ui.label(&format!("- [ ] {}", todo), pair);
         }
+
         ui.end_layout();
 
         ui.begin_layout(LayoutDir::Vertical);
-        ui.label("DONE:", REGULAR_PAIR);
+
+        let done_header_color = if focus == Status::Done {
+            HIGHLIGHT_PAIR
+        } else {
+            REGULAR_PAIR
+        };
+
+        ui.label(" DONE ", done_header_color);
         ui.label("------------", REGULAR_PAIR);
+
         for (index, done) in dones.iter().enumerate() {
             let pair = if index == selected_done && focus == Status::Done {
                 HIGHLIGHT_PAIR
             } else {
                 REGULAR_PAIR
             };
-            ui.label(&format!("- [X] {}", done), pair);
+            ui.label(&format!("- [x] {}", done), pair);
         }
+
         ui.end_layout();
 
         ui.end();
