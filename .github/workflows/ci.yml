@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   build_and_test:
-    name: Rust project
+    name: ttd
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -13,19 +13,23 @@ jobs:
           sudo apt-get install -qq libncurses-dev libpcre2-dev libncursesw5-dev
 
       - uses: actions-rs/cargo@v1
+      - name: build
         with: 
           command: build
           args: --release --all-features
 
       - uses: actions-rs/cargo@v1
+      - name: test
         with:
           command: test
 
       - uses: actions-rs/cargo@v1
+      - name: lint
         with:
           command: clippy
 
       - uses: actions-rs/cargo@v1
+      - name: format
         with:
           command: fmt
           args: -- --check
