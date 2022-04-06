@@ -133,6 +133,11 @@ fn main() -> std::io::Result<()> {
 
     while !quit {
         erase();
+
+        let mut window_w = 0;
+        let mut window_h = 0;
+        getmaxyx(stdscr(), &mut window_h, &mut window_w);
+
         ui.begin(Vec2::zero(), LayoutDir::Horizontal);
 
         ui.begin_layout(LayoutDir::Vertical);
@@ -143,8 +148,8 @@ fn main() -> std::io::Result<()> {
             REGULAR_PAIR
         };
 
-        ui.label(" TODO ", todo_header_color);
-        ui.label("------------", REGULAR_PAIR);
+        ui.label_fixed_width(" TODO ", todo_header_color, window_w / 2);
+        ui.label_fixed_width("------------", REGULAR_PAIR, window_w / 2);
 
         for (index, todo) in todos.iter().enumerate() {
             let pair = if index == selected_todo && focus == Status::Todo {
@@ -152,7 +157,7 @@ fn main() -> std::io::Result<()> {
             } else {
                 REGULAR_PAIR
             };
-            ui.label(&format!("- [ ] {}", todo), pair);
+            ui.label_fixed_width(&format!("- [ ] {}", todo), pair, window_w / 2);
         }
 
         ui.end_layout();
@@ -165,8 +170,8 @@ fn main() -> std::io::Result<()> {
             REGULAR_PAIR
         };
 
-        ui.label(" DONE ", done_header_color);
-        ui.label("------------", REGULAR_PAIR);
+        ui.label_fixed_width(" DONE ", done_header_color, window_w / 2);
+        ui.label_fixed_width("------------", REGULAR_PAIR, window_w / 2);
 
         for (index, done) in dones.iter().enumerate() {
             let pair = if index == selected_done && focus == Status::Done {
@@ -174,7 +179,7 @@ fn main() -> std::io::Result<()> {
             } else {
                 REGULAR_PAIR
             };
-            ui.label(&format!("- [x] {}", done), pair);
+            ui.label_fixed_width(&format!("- [x] {}", done), pair, window_w / 2);
         }
 
         ui.end_layout();

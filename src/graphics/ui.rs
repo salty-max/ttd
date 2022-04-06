@@ -38,7 +38,12 @@ impl UI {
             .add_widget(layout.size);
     }
 
+    #[allow(dead_code)]
     pub fn label(&mut self, s: &str, pair: i16) {
+        self.label_fixed_width(s, pair, s.len() as i32)
+    }
+
+    pub fn label_fixed_width(&mut self, s: &str, pair: i16, width: i32) {
         let layout = self
             .layouts
             .last_mut()
@@ -49,6 +54,6 @@ impl UI {
         attron(COLOR_PAIR(pair));
         addstr(s);
         attroff(COLOR_PAIR(pair));
-        layout.add_widget(Vec2::new(s.len() as i32, 1));
+        layout.add_widget(Vec2::new(width as i32, 1));
     }
 }
