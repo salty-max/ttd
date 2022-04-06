@@ -44,18 +44,14 @@ fn list_transfer(
 }
 
 fn parse_item(line: &str) -> Option<(Status, &str)> {
-    let todo_prefix = "TODO: ";
-    let done_prefix = "DONE: ";
+    let todo_item = line
+        .strip_prefix("TODO: ")
+        .map(|label| (Status::Todo, label));
+    let done_item = line
+        .strip_prefix("DONE: ")
+        .map(|label| (Status::Done, label));
 
-    if let Some(label) = line.strip_prefix(todo_prefix) {
-        return Some((Status::Todo, label));
-    }
-
-    if let Some(label) = line.strip_prefix(done_prefix) {
-        return Some((Status::Done, label));
-    }
-
-    None
+    todo_item.or(done_item)
 }
 
 fn load_state(todos: &mut Vec<String>, dones: &mut Vec<String>, file_path: &str) -> io::Result<()> {
