@@ -285,7 +285,7 @@ fn main() -> std::io::Result<()> {
                                     }
                                 } else {
                                     ui.label_fixed_width(
-                                        &format!("- [ ] {}", done),
+                                        &format!("- [x] {}", done),
                                         HIGHLIGHT_PAIR,
                                         window_w / 2,
                                     );
@@ -298,7 +298,7 @@ fn main() -> std::io::Result<()> {
                                 }
                             } else {
                                 ui.label_fixed_width(
-                                    &format!("- [ ] {}", done),
+                                    &format!("- [x] {}", done),
                                     REGULAR_PAIR,
                                     window_w / 2,
                                 );
