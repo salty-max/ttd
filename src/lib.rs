@@ -1,3 +1,4 @@
+pub mod ctrlc;
 pub mod graphics;
 
 pub const REGULAR_PAIR: i16 = 0;

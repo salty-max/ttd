@@ -14,6 +14,7 @@ use std::{
 
 use ncurses::*;
 use ttd::{
+    ctrlc,
     graphics::{layout::LayoutDir, ui::UI, vec2::Vec2},
     Status, HIGHLIGHT_PAIR, ID, REGULAR_PAIR,
 };
@@ -106,6 +107,8 @@ fn save_state(todos: &[String], dones: &[String], file_path: &str) -> io::Result
 }
 
 fn main() -> std::io::Result<()> {
+    ctrlc::init();
+
     let mut args = env::args();
     args.next().unwrap();
 
@@ -138,6 +141,7 @@ fn main() -> std::io::Result<()> {
 
     initscr();
     noecho();
+    timeout(16);
     curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
     keypad(stdscr(), true);
 
@@ -151,7 +155,7 @@ fn main() -> std::io::Result<()> {
 
     let mut ui = UI::default();
 
-    while !quit {
+    while !quit && !ctrlc::poll() {
         erase();
 
         let mut window_w = 0;
@@ -161,7 +165,6 @@ fn main() -> std::io::Result<()> {
         ui.begin(Vec2::zero(), LayoutDir::Vertical);
 
         ui.label_fixed_width(&notification, REGULAR_PAIR, window_w);
-        notification.clear();
         ui.label_fixed_width("", REGULAR_PAIR, window_w);
 
         ui.begin_layout(LayoutDir::Horizontal);
@@ -221,6 +224,9 @@ fn main() -> std::io::Result<()> {
         refresh();
 
         let key = getch();
+        if key != ERR {
+            notification.clear();
+        }
         match key as u8 as char {
             'q' => quit = true,
             'w' | 'z' => match focus {
@@ -263,7 +269,7 @@ fn main() -> std::io::Result<()> {
     endwin();
 
     save_state(&todos, &dones, &file_path)?;
-    println!("Saved state to {}", file_path);
+    println!("Saved state to {} 👋", file_path);
 
     Ok(())
 }
