@@ -55,6 +55,15 @@ fn list_transfer(
     }
 }
 
+fn list_delete(list: &mut Vec<String>, selected: &mut ID) {
+    if *selected < list.len() {
+        list.remove(*selected);
+        if *selected >= list.len() && !list.is_empty() {
+            *selected = list.len() - 1;
+        }
+    }
+}
+
 fn parse_item(line: &str) -> Option<(Status, &str)> {
     let todo_item = line
         .strip_prefix("TODO: ")
@@ -114,7 +123,6 @@ fn main() -> std::io::Result<()> {
     let mut selected_todo: ID = 0;
     let mut selected_done: ID = 0;
 
-    load_state(&mut todos, &mut dones, &file_path)?;
     let mut notification: String;
 
     match load_state(&mut todos, &mut dones, &file_path) {
@@ -230,6 +238,10 @@ fn main() -> std::io::Result<()> {
             'S' => match focus {
                 Status::Todo => drag_down(&mut todos, &mut selected_todo),
                 Status::Done => drag_down(&mut dones, &mut selected_done),
+            },
+            'd' => match focus {
+                Status::Todo => list_delete(&mut todos, &mut selected_todo),
+                Status::Done => list_delete(&mut dones, &mut selected_done),
             },
             '\n' => match focus {
                 Status::Todo => {
