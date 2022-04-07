@@ -1,5 +1,6 @@
+TODO: Sleep at least 6 hours
 TODO: Write a Todo app
 TODO: Eat junk food
-TODO: Pet the dog
+TODO: Pet the cat
 DONE: Eat lunch
 DONE: Being pissed at react-native

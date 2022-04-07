@@ -223,7 +223,17 @@ fn main() -> std::io::Result<()> {
                                 'S' => drag_down(&mut todos, &mut selected_todo),
                                 'w' | 'z' => move_up(&mut selected_todo),
                                 's' => move_down(&mut selected_todo, &todos),
-                                'd' => list_delete(&mut todos, &mut selected_todo),
+                                'i' => {
+                                    todos.insert(selected_todo, String::new());
+                                    edit_cursor = 0;
+                                    editing = true;
+                                    notification.push_str("What needs to be done?");
+                                }
+                                'd' => {
+                                    notification.push_str(
+                                        "Cannot remove items from TODO. Mark it as DONE first.",
+                                    );
+                                }
                                 '\n' => {
                                     list_transfer(&mut todos, &mut dones, &mut selected_todo);
                                     notification.push_str("DONE!");
@@ -301,6 +311,9 @@ fn main() -> std::io::Result<()> {
                                 'S' => drag_down(&mut dones, &mut selected_done),
                                 'w' | 'z' => move_up(&mut selected_done),
                                 's' => move_down(&mut selected_done, &dones),
+                                'i' => notification.push_str(
+                                    "Cannot insert new DONE items. Only TODO is allowed.",
+                                ),
                                 'd' => list_delete(&mut dones, &mut selected_done),
                                 '\n' => {
                                     list_transfer(&mut dones, &mut todos, &mut selected_done);
