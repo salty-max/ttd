@@ -17,7 +17,7 @@ $ cargo run SAMPLE.txt
 |Keys|Description|
 |---|---|
 |<kbd>w</kbd>, <kbd>z</kbd>|Move up|
-|<kbd>Shift</kbd> + <kbd>w</kbd>|Drag item up|
+|<kbd>Shift</kbd> + <kbd>w</kbd>, <kbd>Shift</kbd> + <kbd>z</kbd>|Drag item up|
 |<kbd>s</kbd>|Move down|
 |<kbd>Shift</kbd> + <kbd>s</kbd>|Drag item down|
 |<kbd>Return</kbd>|Toggle selected element's state|
