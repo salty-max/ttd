@@ -1,10 +1,7 @@
 // TODO: add new items
 // TODO: edit items
-// TODO: delete items
 // TODO: keep track of an item's done date
 // TODO: undo system
-// TODO: handle SIGINT
-
 use std::{
     env,
     fs::File,
@@ -141,9 +138,9 @@ fn main() -> std::io::Result<()> {
 
     initscr();
     noecho();
+    keypad(stdscr(), true);
     timeout(16);
     curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
-    keypad(stdscr(), true);
 
     start_color();
     init_pair(REGULAR_PAIR, COLOR_WHITE, COLOR_BLACK);
@@ -153,7 +150,11 @@ fn main() -> std::io::Result<()> {
 
     let mut focus = Status::Todo;
 
+    let mut editing = false;
+    let mut edit_cursor = 0;
+
     let mut ui = UI::default();
+    let mut current_key = None;
 
     while !quit && !ctrlc::poll() {
         erase();
@@ -164,105 +165,185 @@ fn main() -> std::io::Result<()> {
 
         ui.begin(Vec2::zero(), LayoutDir::Vertical);
 
-        ui.label_fixed_width(&notification, REGULAR_PAIR, window_w);
-        ui.label_fixed_width("", REGULAR_PAIR, window_w);
-
-        ui.begin_layout(LayoutDir::Horizontal);
-
         {
-            ui.begin_layout(LayoutDir::Vertical);
+            ui.label_fixed_width(&notification, REGULAR_PAIR, window_w);
+            ui.label_fixed_width("", REGULAR_PAIR, window_w);
 
-            let todo_header_color = if focus == Status::Todo {
-                HIGHLIGHT_PAIR
-            } else {
-                REGULAR_PAIR
-            };
+            ui.begin_layout(LayoutDir::Horizontal);
 
-            ui.label_fixed_width(" TODO ", todo_header_color, window_w / 2);
-            ui.label_fixed_width("------------", REGULAR_PAIR, window_w / 2);
+            {
+                ui.begin_layout(LayoutDir::Vertical);
 
-            for (index, todo) in todos.iter().enumerate() {
-                let pair = if index == selected_todo && focus == Status::Todo {
-                    HIGHLIGHT_PAIR
-                } else {
-                    REGULAR_PAIR
-                };
-                ui.label_fixed_width(&format!("- [ ] {}", todo), pair, window_w / 2);
+                {
+                    if focus == Status::Todo {
+                        ui.label_fixed_width(" TODO ", HIGHLIGHT_PAIR, window_w / 2);
+                        ui.label_fixed_width("------------", REGULAR_PAIR, window_w / 2);
+
+                        for (index, todo) in todos.iter_mut().enumerate() {
+                            if index == selected_todo {
+                                if editing {
+                                    ui.edit_field(
+                                        todo,
+                                        &mut edit_cursor,
+                                        &mut current_key,
+                                        window_w / 2,
+                                    );
+
+                                    if let Some('\n') = current_key.take().map(|x| x as u8 as char)
+                                    {
+                                        notification.push_str("Exit EDIT mode");
+                                        editing = false;
+                                    }
+                                } else {
+                                    ui.label_fixed_width(
+                                        &format!("- [ ] {}", todo),
+                                        HIGHLIGHT_PAIR,
+                                        window_w / 2,
+                                    );
+
+                                    if let Some('r') = current_key.map(|x| x as u8 as char) {
+                                        notification.push_str("Enter EDIT mode");
+                                        editing = true;
+                                        edit_cursor = todo.len();
+                                        current_key = None;
+                                    }
+                                }
+                            } else {
+                                ui.label_fixed_width(
+                                    &format!("- [ ] {}", todo),
+                                    REGULAR_PAIR,
+                                    window_w / 2,
+                                );
+                            }
+                        }
+
+                        if let Some(key) = current_key.take() {
+                            match key as u8 as char {
+                                'W' | 'Z' => drag_up(&mut todos, &mut selected_todo),
+                                'S' => drag_down(&mut todos, &mut selected_todo),
+                                'w' | 'z' => move_up(&mut selected_todo),
+                                's' => move_down(&mut selected_todo, &todos),
+                                'd' => list_delete(&mut todos, &mut selected_todo),
+                                '\n' => {
+                                    list_transfer(&mut todos, &mut dones, &mut selected_todo);
+                                    notification.push_str("DONE!");
+                                }
+                                '\t' => {
+                                    focus = focus.toggle();
+                                }
+                                _ => {}
+                            }
+                        }
+                    } else {
+                        ui.label_fixed_width(" TODO ", REGULAR_PAIR, window_w / 2);
+                        ui.label_fixed_width("------------", REGULAR_PAIR, window_w / 2);
+
+                        for todo in todos.iter() {
+                            ui.label_fixed_width(
+                                &format!("- [ ] {}", todo),
+                                REGULAR_PAIR,
+                                window_w / 2,
+                            );
+                        }
+                    }
+                }
+
+                ui.end_layout();
+            }
+
+            {
+                ui.begin_layout(LayoutDir::Vertical);
+
+                {
+                    if focus == Status::Done {
+                        ui.label_fixed_width(" DONE ", HIGHLIGHT_PAIR, window_w / 2);
+                        ui.label_fixed_width("------------", REGULAR_PAIR, window_w / 2);
+
+                        for (index, done) in dones.iter_mut().enumerate() {
+                            if index == selected_done {
+                                if editing {
+                                    ui.edit_field(
+                                        done,
+                                        &mut edit_cursor,
+                                        &mut current_key,
+                                        window_w / 2,
+                                    );
+
+                                    if let Some('\n') = current_key.take().map(|x| x as u8 as char)
+                                    {
+                                        editing = false;
+                                    }
+                                } else {
+                                    ui.label_fixed_width(
+                                        &format!("- [ ] {}", done),
+                                        HIGHLIGHT_PAIR,
+                                        window_w / 2,
+                                    );
+
+                                    if let Some('r') = current_key.map(|x| x as u8 as char) {
+                                        editing = true;
+                                        edit_cursor = done.len();
+                                        current_key = None;
+                                    }
+                                }
+                            } else {
+                                ui.label_fixed_width(
+                                    &format!("- [ ] {}", done),
+                                    REGULAR_PAIR,
+                                    window_w / 2,
+                                );
+                            }
+                        }
+
+                        if let Some(key) = current_key.take() {
+                            match key as u8 as char {
+                                'W' | 'Z' => drag_up(&mut dones, &mut selected_done),
+                                'S' => drag_down(&mut dones, &mut selected_done),
+                                'w' | 'z' => move_up(&mut selected_done),
+                                's' => move_down(&mut selected_done, &dones),
+                                'd' => list_delete(&mut dones, &mut selected_done),
+                                '\n' => {
+                                    list_transfer(&mut dones, &mut todos, &mut selected_done);
+                                    notification.push_str("Not done yet...");
+                                }
+                                '\t' => {
+                                    focus = focus.toggle();
+                                }
+                                _ => {}
+                            }
+                        }
+                    } else {
+                        ui.label_fixed_width(" DONE ", REGULAR_PAIR, window_w / 2);
+                        ui.label_fixed_width("------------", REGULAR_PAIR, window_w / 2);
+
+                        for done in dones.iter() {
+                            ui.label_fixed_width(
+                                &format!("- [x] {}", done),
+                                REGULAR_PAIR,
+                                window_w / 2,
+                            );
+                        }
+                    }
+                }
+
+                ui.end_layout();
             }
 
             ui.end_layout();
         }
-
-        {
-            ui.begin_layout(LayoutDir::Vertical);
-
-            let done_header_color = if focus == Status::Done {
-                HIGHLIGHT_PAIR
-            } else {
-                REGULAR_PAIR
-            };
-
-            ui.label_fixed_width(" DONE ", done_header_color, window_w / 2);
-            ui.label_fixed_width("------------", REGULAR_PAIR, window_w / 2);
-
-            for (index, done) in dones.iter().enumerate() {
-                let pair = if index == selected_done && focus == Status::Done {
-                    HIGHLIGHT_PAIR
-                } else {
-                    REGULAR_PAIR
-                };
-                ui.label_fixed_width(&format!("- [x] {}", done), pair, window_w / 2);
-            }
-
-            ui.end_layout();
-        }
-
-        ui.end_layout();
 
         ui.end();
+
+        if let Some('q') = current_key.take().map(|x| x as u8 as char) {
+            quit = true;
+        }
 
         refresh();
 
         let key = getch();
         if key != ERR {
             notification.clear();
-        }
-        match key as u8 as char {
-            'q' => quit = true,
-            'w' | 'z' => match focus {
-                Status::Todo => move_up(&mut selected_todo),
-                Status::Done => move_up(&mut selected_done),
-            },
-            'W' | 'Z' => match focus {
-                Status::Todo => drag_up(&mut todos, &mut selected_todo),
-                Status::Done => drag_up(&mut dones, &mut selected_done),
-            },
-            's' => match focus {
-                Status::Todo => move_down(&mut selected_todo, &todos),
-                Status::Done => move_down(&mut selected_done, &dones),
-            },
-            'S' => match focus {
-                Status::Todo => drag_down(&mut todos, &mut selected_todo),
-                Status::Done => drag_down(&mut dones, &mut selected_done),
-            },
-            'd' => match focus {
-                Status::Todo => list_delete(&mut todos, &mut selected_todo),
-                Status::Done => list_delete(&mut dones, &mut selected_done),
-            },
-            '\n' => match focus {
-                Status::Todo => {
-                    list_transfer(&mut todos, &mut dones, &mut selected_todo);
-                    notification.push_str("DONE!");
-                }
-                Status::Done => {
-                    list_transfer(&mut dones, &mut todos, &mut selected_done);
-                    notification.push_str("Not done yet...");
-                }
-            },
-            '\t' => {
-                focus = focus.toggle();
-            }
-            _ => {}
+            current_key = Some(key);
         }
     }
 

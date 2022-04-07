@@ -1,3 +1,5 @@
+use crate::{HIGHLIGHT_PAIR, REGULAR_PAIR};
+
 use super::{
     layout::{Layout, LayoutDir},
     vec2::Vec2,
@@ -55,5 +57,81 @@ impl UI {
         addstr(s);
         attroff(COLOR_PAIR(pair));
         layout.add_widget(Vec2::new(width as i32, 1));
+    }
+
+    pub fn edit_field(
+        &mut self,
+        buffer: &mut String,
+        cursor: &mut usize,
+        current_key: &mut Option<i32>,
+        width: i32,
+    ) {
+        let layout = self
+            .layouts
+            .last_mut()
+            .expect("Trying to render edit field outside of a layout");
+
+        let pos = layout.available_pos();
+
+        if *cursor > buffer.len() {
+            *cursor = buffer.len();
+        }
+
+        if let Some(key) = current_key.take() {
+            match key {
+                32..=126 => {
+                    if *cursor >= buffer.len() {
+                        buffer.push(key as u8 as char);
+                    } else {
+                        buffer.insert(*cursor, key as u8 as char);
+                    }
+
+                    *cursor += 1;
+                }
+                constants::KEY_LEFT => {
+                    if *cursor > 0 {
+                        *cursor -= 1;
+                    }
+                }
+                constants::KEY_RIGHT => {
+                    if *cursor < buffer.len() {
+                        *cursor += 1;
+                    }
+                }
+                constants::KEY_BACKSPACE | 127 => {
+                    if *cursor > 0 {
+                        *cursor -= 1;
+                        if *cursor < buffer.len() {
+                            buffer.remove(*cursor);
+                        }
+                    }
+                }
+                constants::KEY_DC => {
+                    if *cursor < buffer.len() {
+                        buffer.remove(*cursor);
+                    }
+                }
+                _ => {
+                    *current_key = Some(key);
+                }
+            }
+        }
+
+        // Buffer
+        {
+            mv(pos.y, pos.x);
+            attron(COLOR_PAIR(REGULAR_PAIR));
+            addstr(buffer);
+            attroff(COLOR_PAIR(REGULAR_PAIR));
+            layout.add_widget(Vec2::new(width, 1));
+        }
+
+        // Cursor
+        {
+            mv(pos.y, pos.x + *cursor as i32);
+            attron(COLOR_PAIR(HIGHLIGHT_PAIR));
+            addstr(buffer.get(*cursor..=*cursor).unwrap_or(" "));
+            attroff(COLOR_PAIR(HIGHLIGHT_PAIR));
+        }
     }
 }
