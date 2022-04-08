@@ -9,6 +9,7 @@ use ncurses::*;
 #[derive(Default)]
 pub struct UI {
     layouts: Vec<Layout>,
+    pub key: Option<i32>,
 }
 
 impl UI {
@@ -59,13 +60,7 @@ impl UI {
         layout.add_widget(Vec2::new(width as i32, 1));
     }
 
-    pub fn edit_field(
-        &mut self,
-        buffer: &mut String,
-        cursor: &mut usize,
-        current_key: &mut Option<i32>,
-        width: i32,
-    ) {
+    pub fn edit_field(&mut self, buffer: &mut String, cursor: &mut usize, width: i32) {
         let layout = self
             .layouts
             .last_mut()
@@ -77,7 +72,7 @@ impl UI {
             *cursor = buffer.len();
         }
 
-        if let Some(key) = current_key.take() {
+        if let Some(key) = self.key.take() {
             match key {
                 32..=126 => {
                     if *cursor >= buffer.len() {
@@ -112,7 +107,7 @@ impl UI {
                     }
                 }
                 _ => {
-                    *current_key = Some(key);
+                    self.key = Some(key);
                 }
             }
         }

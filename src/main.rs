@@ -154,7 +154,6 @@ fn main() -> std::io::Result<()> {
     let mut edit_cursor = 0;
 
     let mut ui = UI::default();
-    let mut current_key = None;
 
     while !quit && !ctrlc::poll() {
         erase();
@@ -182,15 +181,9 @@ fn main() -> std::io::Result<()> {
                         for (index, todo) in todos.iter_mut().enumerate() {
                             if index == selected_todo {
                                 if editing {
-                                    ui.edit_field(
-                                        todo,
-                                        &mut edit_cursor,
-                                        &mut current_key,
-                                        window_w / 2,
-                                    );
+                                    ui.edit_field(todo, &mut edit_cursor, window_w / 2);
 
-                                    if let Some('\n') = current_key.take().map(|x| x as u8 as char)
-                                    {
+                                    if let Some('\n') = ui.key.take().map(|x| x as u8 as char) {
                                         notification.push_str("Exit EDIT mode");
                                         editing = false;
                                     }
@@ -201,11 +194,11 @@ fn main() -> std::io::Result<()> {
                                         window_w / 2,
                                     );
 
-                                    if let Some('r') = current_key.map(|x| x as u8 as char) {
+                                    if let Some('r') = ui.key.map(|x| x as u8 as char) {
                                         notification.push_str("Enter EDIT mode");
                                         editing = true;
                                         edit_cursor = todo.len();
-                                        current_key = None;
+                                        ui.key = None;
                                     }
                                 }
                             } else {
@@ -217,7 +210,7 @@ fn main() -> std::io::Result<()> {
                             }
                         }
 
-                        if let Some(key) = current_key.take() {
+                        if let Some(key) = ui.key.take() {
                             match key as u8 as char {
                                 'W' | 'Z' => drag_up(&mut todos, &mut selected_todo),
                                 'S' => drag_down(&mut todos, &mut selected_todo),
@@ -272,15 +265,9 @@ fn main() -> std::io::Result<()> {
                         for (index, done) in dones.iter_mut().enumerate() {
                             if index == selected_done {
                                 if editing {
-                                    ui.edit_field(
-                                        done,
-                                        &mut edit_cursor,
-                                        &mut current_key,
-                                        window_w / 2,
-                                    );
+                                    ui.edit_field(done, &mut edit_cursor, window_w / 2);
 
-                                    if let Some('\n') = current_key.take().map(|x| x as u8 as char)
-                                    {
+                                    if let Some('\n') = ui.key.take().map(|x| x as u8 as char) {
                                         editing = false;
                                     }
                                 } else {
@@ -290,10 +277,10 @@ fn main() -> std::io::Result<()> {
                                         window_w / 2,
                                     );
 
-                                    if let Some('r') = current_key.map(|x| x as u8 as char) {
+                                    if let Some('r') = ui.key.map(|x| x as u8 as char) {
                                         editing = true;
                                         edit_cursor = done.len();
-                                        current_key = None;
+                                        ui.key = None;
                                     }
                                 }
                             } else {
@@ -305,7 +292,7 @@ fn main() -> std::io::Result<()> {
                             }
                         }
 
-                        if let Some(key) = current_key.take() {
+                        if let Some(key) = ui.key.take() {
                             match key as u8 as char {
                                 'W' | 'Z' => drag_up(&mut dones, &mut selected_done),
                                 'S' => drag_down(&mut dones, &mut selected_done),
@@ -347,7 +334,7 @@ fn main() -> std::io::Result<()> {
 
         ui.end();
 
-        if let Some('q') = current_key.take().map(|x| x as u8 as char) {
+        if let Some('q') = ui.key.take().map(|x| x as u8 as char) {
             quit = true;
         }
 
@@ -356,7 +343,7 @@ fn main() -> std::io::Result<()> {
         let key = getch();
         if key != ERR {
             notification.clear();
-            current_key = Some(key);
+            ui.key = Some(key);
         }
     }
 
